@@ -1,5 +1,7 @@
 const express = require("express");
-const dotenv = require("dotenv").config();
+const dotenv = require("dotenv");
+const cors = require("cors");
+dotenv.config();
 
 const userRoutes = require("./routes/userRoutes");
 const chatRoutes = require("./routes/chatRoutes");
@@ -16,9 +18,15 @@ connectDB();
 
 // add middleware
 app.use(express.json());
+app.use(
+  cors({
+    origin: "*",
+    credentials: true,
+  })
+);
 
 app.get("/", (req, res) => {
-  res.json({ msg: "Welcome to TalkWave" });
+  res.json({ message: "Welcome to TalkWave" });
 });
 app.use("/api/user", userRoutes);
 app.use("/api/chat", chatRoutes);
@@ -61,13 +69,13 @@ io.on("connection", (socket) => {
     if (!chat.users) return console.log("chat.users not defined");
 
     chat.users.forEach((user) => {
-      if (user._id == newMessageReceived.sender._id) return;
+      if (user._id === newMessageReceived.sender._id) return;
 
       socket.in(user._id).emit("message received", newMessageReceived);
     });
   });
 
-  socket.off("setup", () => {
+  socket.off("setup", (userData) => {
     console.log("USER DISCONNECTED");
     socket.leave(userData._id);
   });
